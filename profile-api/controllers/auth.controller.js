@@ -45,32 +45,16 @@ module.exports.logout = (req, res, next) => {
 
 module.exports.getProfile = (req, res, next) => {
   res.json(req.user)
-
 }
 
 module.exports.editProfile = (req, res, next) => {
-  const newUser =  { 
-    email:  req.body.email,
-    campus: req.body.campus,  
-    course: req.body.course,
-    avatarURL : req.file ? req.file.secure_url : ''
-}
-
-console.log(req.user.id)
-
-User.findByIdAndUpdate(req.user.id, {
-  $set: newUser
-}, {
-  safe: true,
-  new: true
-})
- .then(user => {
-  if (!user) {
-    next(createError(404, 'User not found'));
-  } else {
-    res.status(201).json(user)
-  }
-})
-.catch(error => next(error));
-throw createError(501, 'Not Implemented')
+  delete req.body.email;
+  
+  const user = req.user;
+  Object.keys(req.body).forEach(prop => user[prop] = req.body[prop]);
+  if (req.file) user.avatarURL = req.file.secure_url;
+  
+  user.save()
+    .then(user => res.status(201).json(user))
+    .catch(next)
 }
